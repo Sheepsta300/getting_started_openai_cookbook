@@ -1,1 +1,1 @@
-# Getting Started Azure OpenAI with Langchain plugins cookbook
+# Getting Started Azure OpenAI with Langchain Plugins Cookbook
