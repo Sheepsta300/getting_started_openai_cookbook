@@ -25,7 +25,7 @@ jobs:
 
     - name: Replace get_ipython Pip Installations
       run: |
-        find . -maxdepth 1 -name "getting_started.py" -exec sed -i -E 's/get_ipython\(\)\.run_line_magic\("pip", "install (.*)"\)/subprocess.check_call(["python", "-m", "pip", "install", "\1"])/g' {} +
+        find . -name "getting_started.py" -exec sed -i -E 's/get_ipython\(\)\.run_line_magic\("pip", "install (.*)"\)/subprocess.check_call(["python", "-m", "pip", "install", "\1"])/g' {} +
     
     - name: Run tests
       env:
