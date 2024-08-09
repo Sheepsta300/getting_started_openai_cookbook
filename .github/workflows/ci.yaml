@@ -21,15 +21,15 @@ jobs:
 
     - name: Convert notebooks to scripts
       run: |
-        jupyter nbconvert --to script notebooks/*.ipynb
+        jupyter nbconvert --to script getting_started.ipynb
         
     - name: Run tests
       env:
         OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
         AZURE_ENDPOINT: ${{ secrets.AZURE_OPENAI_API_ENDPOINT }}
       run: |
-        pytest notebooks/*.py
+        pytest getting_started.py
     
     - name: Lint notebooks
       run: |
-        flake8 notebooks/*.py
+        flake8 getting_started.py
