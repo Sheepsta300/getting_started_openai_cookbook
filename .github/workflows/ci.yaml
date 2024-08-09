@@ -18,15 +18,16 @@ jobs:
       run: |
         pip install -r requirements.txt
         pip install jupyter nbconvert pytest
+
+    - name: Convert notebooks to scripts
+      run: |
+        jupyter nbconvert --to script notebooks/*.ipynb
         
-    - name: Set up environment variables
+    - name: Run tests
       env:
         OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
         AZURE_ENDPOINT: ${{ secrets.AZURE_OPENAI_API_ENDPOINT }}
-    
-    - name: Convert and test notebooks
       run: |
-        jupyter nbconvert --to script notebooks/*.ipynb
         pytest notebooks/*.py
     
     - name: Lint notebooks
