@@ -1,1 +1,34 @@
+name: CI for Jupyter Notebooks
 
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+    
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install jupyter nbconvert pytest
+        
+    - name: Set up environment variables
+      env:
+        OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+        AZURE_ENDPOINT: ${{ secrets.AZURE_OPENAI_API_ENDPOINT }}
+    
+    - name: Convert and test notebooks
+      run: |
+        jupyter nbconvert --to script notebooks/*.ipynb
+        pytest notebooks/*.py
+    
+    - name: Lint notebooks
+      run: |
+        flake8 notebooks/*.py
