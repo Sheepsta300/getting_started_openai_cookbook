@@ -22,7 +22,11 @@ jobs:
     - name: Convert notebooks to scripts
       run: |
         jupyter nbconvert --to script getting_started.ipynb
-        
+
+    - name: Replace get_ipython Pip Installations
+      run: |
+        find notebooks -name "*.py" -exec sed -i -E 's/get_ipython\(\)\.run_line_magic\("pip", "install (.*)"\)/subprocess.check_call(["python", "-m", "pip", "install", "\1"])/g' {} +
+    
     - name: Run tests
       env:
         OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
