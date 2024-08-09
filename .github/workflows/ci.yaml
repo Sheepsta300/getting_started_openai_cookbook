@@ -23,14 +23,12 @@ jobs:
       run: |
         jupyter nbconvert --to script getting_started.ipynb
 
-    - name: Replace get_ipython Pip Installations
-      run: |
-        find . -name "getting_started.py" -exec sed -i -E 's/get_ipython\(\)\.run_line_magic\("pip", "install (.*)"\)/subprocess.check_call(["python", "-m", "pip", "install", "\1"])/g' {} +
-    
     - name: Run tests
       env:
-        OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
-        AZURE_ENDPOINT: ${{ secrets.AZURE_OPENAI_API_ENDPOINT }}
+        COMPLETIONS_MODEL: ${{ secrets.COMPLETIONS_MODEL }}
+        AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+        AZURE_OPENAI_API_ENDPOINT: ${{ secrets.AZURE_OPENAI_API_ENDPOINT }}
+        AZURE_OPENAI_API_VERSION: ${{ secrets.AZURE_OPENAI_API_VERSION }}
       run: |
         pytest getting_started.py
     
