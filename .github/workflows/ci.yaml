@@ -30,7 +30,7 @@ jobs:
         AZURE_OPENAI_API_ENDPOINT: ${{ secrets.AZURE_OPENAI_API_ENDPOINT }}
         AZURE_OPENAI_API_VERSION: ${{ secrets.AZURE_OPENAI_API_VERSION }}
       run: |
-        pytest getting_started.py
+        python -W error getting_started.py
     
     - name: Lint notebooks
       run: |
