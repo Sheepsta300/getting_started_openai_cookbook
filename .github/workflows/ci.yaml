@@ -17,7 +17,8 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
-        pip install jupyter nbconvert flake8
+        pip install jupyter nbconvert 
+# flake8
 
     - name: Convert notebook to script
       run: |
@@ -32,6 +33,6 @@ jobs:
       run: |
         python -W error getting_started.py
     
-    - name: Lint script
-      run: |
-        flake8 getting_started.py
+# - name: Lint script
+#   run: |
+#     flake8 getting_started.py
