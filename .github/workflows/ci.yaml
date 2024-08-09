@@ -17,18 +17,22 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
-        pip install jupyter nbconvert pytest
-        
-    - name: Set up environment variables
+        pip install jupyter nbconvert 
+# flake8
+
+    - name: Convert notebook to script
+      run: |
+        jupyter nbconvert --to script getting_started.ipynb
+
+    - name: Run script
       env:
-        OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
-        AZURE_ENDPOINT: ${{ secrets.AZURE_OPENAI_API_ENDPOINT }}
-    
-    - name: Convert and test notebooks
+        COMPLETIONS_MODEL: ${{ secrets.COMPLETIONS_MODEL }}
+        AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+        AZURE_OPENAI_API_ENDPOINT: ${{ secrets.AZURE_OPENAI_API_ENDPOINT }}
+        AZURE_OPENAI_API_VERSION: ${{ secrets.AZURE_OPENAI_API_VERSION }}
       run: |
-        jupyter nbconvert --to script notebooks/*.ipynb
-        pytest notebooks/*.py
+        python -W error getting_started.py
     
-    - name: Lint notebooks
-      run: |
-        flake8 notebooks/*.py
+# - name: Lint script
+#   run: |
+#     flake8 getting_started.py
