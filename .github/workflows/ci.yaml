@@ -1,0 +1,38 @@
+name: CI for Jupyter Notebooks
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+    
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install jupyter nbconvert 
+# flake8
+
+    - name: Convert notebook to script
+      run: |
+        jupyter nbconvert --to script getting_started.ipynb
+
+    - name: Run script
+      env:
+        COMPLETIONS_MODEL: ${{ secrets.COMPLETIONS_MODEL }}
+        AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+        AZURE_OPENAI_API_ENDPOINT: ${{ secrets.AZURE_OPENAI_API_ENDPOINT }}
+        AZURE_OPENAI_API_VERSION: ${{ secrets.AZURE_OPENAI_API_VERSION }}
+      run: |
+        python -W error getting_started.py
+    
+# - name: Lint script
+#   run: |
+#     flake8 getting_started.py
