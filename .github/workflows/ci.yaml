@@ -27,6 +27,7 @@ jobs:
     - name: Run script
       env:
         COMPLETIONS_MODEL: ${{ secrets.COMPLETIONS_MODEL }}
+        EMBEDDINGS_MODEL: ${{ secrets.EMBEDDINGS_MODEL }}
         AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
         AZURE_OPENAI_API_ENDPOINT: ${{ secrets.AZURE_OPENAI_API_ENDPOINT }}
         AZURE_OPENAI_API_VERSION: ${{ secrets.AZURE_OPENAI_API_VERSION }}
