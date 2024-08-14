@@ -4,3 +4,5 @@ httpx
 pydantic
 openai
 langchain-community
+numpy
+pandas

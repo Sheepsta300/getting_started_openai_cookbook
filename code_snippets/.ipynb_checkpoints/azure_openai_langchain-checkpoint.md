@@ -473,6 +473,33 @@ await get_response(messages, model)
 
 ```
 
+## Cosmos DB
+
+**Requires a Cosmos DB resource!!!!**
+Uses text embeddings to create vector representations of text and uses cosine similarity to search similar semantic meaning
+
+As previously mentioned, various Azure Search and Database services can leverage embeddings and vector search, [**Azure Cosmos DB No SQL**](https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/vector-search) | [**Azure Cosmos DB Mongo vCore**](https://learn.microsoft.com/en-us/azure/cosmos-db/mongodb/vcore/vector-search) are some such services.
+
+#### Setup
+```python
+from langchain_community.vectorstores.azure_cosmos_db import (
+    AzureCosmosDBVectorSearch,
+    CosmosDBSimilarityType,
+    CosmosDBVectorSearchType,
+)
+```
+
+```python
+vectorstore = AzureCosmosDBVectorSearch.from_documents(
+    # Text from earlier
+    text,
+    # Embeddings model from earlier
+    E_model,
+    collection=collection,
+    index_name=INDEX_NAME,
+)
+```
+
 Agents
 Tools
 Retrieval 
