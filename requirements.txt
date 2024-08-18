@@ -6,3 +6,4 @@ openai
 langchain-community
 numpy
 pandas
+python-dotenv
