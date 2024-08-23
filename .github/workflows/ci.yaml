@@ -29,8 +29,8 @@ jobs:
         COMPLETIONS_MODEL: ${{ secrets.COMPLETIONS_MODEL }}
         EMBEDDINGS_MODEL: ${{ secrets.EMBEDDINGS_MODEL }}
         AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
-        AZURE_OPENAI_API_ENDPOINT: ${{ secrets.AZURE_OPENAI_API_ENDPOINT }}
-        AZURE_OPENAI_API_VERSION: ${{ secrets.AZURE_OPENAI_API_VERSION }}
+        AZURE_OPENAI_API_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+        AZURE_OPENAI_API_VERSION: ${{ secrets.OPENAI_API_VERSION }}
       run: |
         python -W error getting_started.py
     
