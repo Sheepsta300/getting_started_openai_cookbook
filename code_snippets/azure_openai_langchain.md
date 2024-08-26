@@ -513,6 +513,7 @@ examples
 
 #### Reference
 - [source code](https://github.com/langchain-ai/langchain/blob/master/libs/langchain/langchain/agents/openai_assistant/base.py#L146)
+
 - [error details - cookbook_chatassistant.ipynb](https://github.com/Sheepsta300/getting_started_openai_cookbook/blob/master/code_snippets/cookbook_chatassistant.ipynb)
 
 
