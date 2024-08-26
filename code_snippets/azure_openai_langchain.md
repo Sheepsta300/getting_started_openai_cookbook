@@ -506,3 +506,100 @@ Retrieval
 Model I/O Output parsers
 
 examples
+
+
+
+## Chat Assistant
+
+#### Reference
+- [source code](https://github.com/langchain-ai/langchain/blob/master/libs/langchain/langchain/agents/openai_assistant/base.py#L146)
+
+- [error details - cookbook_chatassistant.ipynb](https://github.com/Sheepsta300/getting_started_openai_cookbook/blob/master/code_snippets/cookbook_chatassistant.ipynb)
+
+
+```
+%pip install -Uq langchain-experimental
+%pip install -Uq langchain
+%pip install -Uq openai
+```
+Returns `TypeError: Assistants.create() got an unexpected keyword argument 'file_ids'`
+
+```python
+from langchain_experimental.openai_assistant import OpenAIAssistantRunnable
+from openai import AzureOpenAI
+import os
+
+
+azure_openai_client = AzureOpenAI(
+    azure_endpoint = os.environ["AZURE_OPENAI_API_ENDPOINT"],
+    api_key = os.environ["AZURE_OPENAI_API_KEY"],
+    api_version = os.environ["AZURE_OPENAI_API_VERSION"],
+    azure_deployment = "gpt-4o"
+)
+
+
+# file = azure_openai_client.files.create(
+#     file=open("file.py", "rb"),
+#     purpose="assistants"
+# )
+
+assistant = OpenAIAssistantRunnable.create_assistant(
+    name="langchain assistant",
+    instructions="You are a personal math tutor. Write and run code to answer math questions.",
+    tools=[{"type": "code_interpreter"}],  
+    model="gpt-4o", 
+    client=azure_openai_client,
+    # tool_resources={"code_interpreter": {"file_ids": [file.id]}}
+)
+output = assistant.invoke({"content": "What's 10 - 4 raised to the 2.7"})
+
+
+# assistant = azure_openai_client.beta.assistants.create(
+#     name="Math Assist",
+#     instructions="You are an AI assistant that can write code to help answer math questions.",
+#     tools=[{"type": "code_interpreter"}],
+#     model="gpt-4o"
+# )
+
+```
+So I tried to add a File,
+Returns `NotFoundError: Error code: 404 - {'error': {'code': '404', 'message': 'Resource not found'}}`
+
+``` python
+from langchain_experimental.openai_assistant import OpenAIAssistantRunnable
+from openai import AzureOpenAI
+import os
+
+
+azure_openai_client = AzureOpenAI(
+    azure_endpoint = os.environ["AZURE_OPENAI_API_ENDPOINT"],
+    api_key = os.environ["AZURE_OPENAI_API_KEY"],
+    api_version = os.environ["AZURE_OPENAI_API_VERSION"],
+    azure_deployment = "gpt-4o"
+)
+
+
+file = azure_openai_client.files.create(
+    file=open("file.py", "rb"),
+    purpose="assistants"
+)
+
+assistant = OpenAIAssistantRunnable.create_assistant(
+    name="langchain assistant",
+    instructions="You are a personal math tutor. Write and run code to answer math questions.",
+    tools=[{"type": "code_interpreter"}],  
+    model="gpt-4o", 
+    client=azure_openai_client,
+    tool_resources={"code_interpreter": {"file_ids": [file.id]}}
+)
+output = assistant.invoke({"content": "What's 10 - 4 raised to the 2.7"})
+
+
+# assistant = azure_openai_client.beta.assistants.create(
+#     name="Math Assist",
+#     instructions="You are an AI assistant that can write code to help answer math questions.",
+#     tools=[{"type": "code_interpreter"}],
+#     model="gpt-4o"
+# )
+
+```
