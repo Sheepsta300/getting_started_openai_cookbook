@@ -1,5 +1,6 @@
 from __future__ import annotations
 import logging
+import os
 from typing import Any, Dict, Optional
 from langchain_core.callbacks import CallbackManagerForToolRun
 from langchain_core.pydantic_v1 import root_validator
@@ -18,9 +19,9 @@ class AzureTranslateTool(BaseTool):
     https://learn.microsoft.com/en-us/azure/ai-services/translator/quickstart-text-rest-api?tabs=python
     """
 
-    azure_cogs_key: str = ""  #: :meta private:
-    azure_cogs_region: str = ""  #: :meta private:
-    translator_endpoint: str = ""  #: :meta private:
+    azure_cogs_key: str
+    azure_cogs_region: str
+    translator_endpoint: str
 
     name: str = "azure_cognitive_services_translator"
     description: str = (
@@ -28,16 +29,17 @@ class AzureTranslateTool(BaseTool):
         "Useful for translating text between languages."
     )
 
+    # using pre loaded enviroment variables for the API key and region - having trouble accessing the point with os.getenv
+
     @root_validator(pre=True)
     def validate_environment(cls, values: Dict) -> Dict:
         """Validate that API key, region, and endpoint exist in the environment."""
-        azure_cogs_key = get_from_dict_or_env(values, "azure_cogs_key", "AZURE_COGS_KEY")
-        azure_cogs_region = get_from_dict_or_env(values, "azure_cogs_region", "AZURE_COGS_REGION")
-        translator_endpoint = get_from_dict_or_env(values, "translator_endpoint", "AZURE_TRANSLATOR_ENDPOINT")
-
-        values["translator_endpoint"] = translator_endpoint
-        values["azure_cogs_key"] = azure_cogs_key
-        values["azure_cogs_region"] = azure_cogs_region
+        values["azure_cogs_key"] = os.getenv("AZURE_OPENAI_TRANSLATE_API_KEY")
+        values["azure_cogs_region"] = os.getenv("REGION")
+        values["translator_endpoint"] = os.getenv("AZURE_OPENAI_TRANSLATE_ENDPOINT",
+                                                  "https://api.cognitive.microsofttranslator.com/")
+        if not values["azure_cogs_key"] or not values["azure_cogs_region"] or not values["translator_endpoint"]:
+            raise ValueError("Missing environment variables for Azure Translator API")
 
         return values
 
