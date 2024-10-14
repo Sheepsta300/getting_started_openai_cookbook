@@ -1,99 +1,136 @@
-from typing import Optional
+from __future__ import annotations
 
-from langchain_core.tools import BaseTool
-from langchain_core.pydantic_v1 import root_validator
-from langchain_core.utils import get_from_dict_or_env
-from langchain_core.callbacks import CallbackManagerForToolRun
-import os
-import requests
 import logging
+import os
+from typing import Any, Optional, Dict
+from langchain_core.callbacks import CallbackManagerForToolRun
+from langchain_core.tools import BaseTool
+from azure.ai.translation.text import TextTranslationClient
+from azure.core.credentials import AzureKeyCredential
 
 logger = logging.getLogger(__name__)
 
-class AzureTranslateTool(BaseTool):
-    """Tool that queries the Azure Cognitive Services Translator API.
 
-    This tool is designed to translate text using the Azure Translator API from Azure Cognitive Services.
+class AzureTranslateTool(BaseTool):
+    """
+    A tool that interacts with the Azure Translator API using the SDK.
+
+    This tool queries the Azure Translator API to translate text between languages.
+    It requires an API key and endpoint, which can be set up as described in the
+    Azure Translator API documentation. https://learn.microsoft.com/en-us/azure/ai-services/translator/translator-text-apis?tabs=python
+
     """
 
-    azure_cogs_key: str = ""  #: :meta private:
-    azure_cogs_region: str = ""  #: :meta private:
-    translator_endpoint: str = ""  #: :meta private:
+    translate_key: str = ""
+    translate_endpoint: str = ""
+    translate_client: Any = None  #: :meta private:
 
-    name: str = "azure_cognitive_services_translator"
+    name: str = "azure_translator_tool"
     description: str = (
-        "A wrapper around Azure Cognitive Services Translator. "
-        "Useful for translating text between languages."
+        "A wrapper around Azure Translator API. "
+        "Useful for translating text between languages. Input must be text (str)."
     )
 
-    @root_validator(pre=True)
-    def validate_environment(cls, values):
-        """Validate that API key, region, and endpoint exist in the environment."""
-        azure_cogs_key = get_from_dict_or_env(values, "azure_cogs_key", "AZURE_OPENAI_TRANSLATE_API_KEY")
-        azure_cogs_region = get_from_dict_or_env(values, "azure_cogs_region", "REGION")
-        translator_endpoint = get_from_dict_or_env(
-            values, "translator_endpoint", "AZURE_OPENAI_TRANSLATE_ENDPOINT",
-            "https://api.cognitive.microsofttranslator.com/"
+    def __init__(self, *, translate_key: Optional[str] = None, translate_endpoint: Optional[str] = None) -> None:
+        """
+        Initialize the AzureTranslateTool with the given API key and endpoint.
+        """
+        translate_key = translate_key or os.environ.get("AZURE_OPENAI_TRANSLATE_API_KEY")
+        translate_endpoint = translate_endpoint or os.environ.get("AZURE_OPENAI_TRANSLATE_ENDPOINT")
+
+        if not translate_key or not translate_endpoint:
+            raise ValueError("Missing API key or endpoint for Azure Translator API.")
+
+        # Initialize parent class (Pydantic)
+        super().__init__(
+            translate_key=translate_key,
+            translate_endpoint=translate_endpoint
         )
 
-        if not azure_cogs_key or not azure_cogs_region:
-            raise ValueError("Missing API key or region in environment variables")
-
-        values["azure_cogs_key"] = azure_cogs_key
-        values["azure_cogs_region"] = azure_cogs_region
-        values["translator_endpoint"] = translator_endpoint
-        return values
-
-    @classmethod
-    def from_env(cls, use_document_translation=False):
-        """Create an instance of the tool using environment variables."""
-        azure_cogs_key = os.getenv("AZURE_OPENAI_TRANSLATE_API_KEY")
-        azure_cogs_region = os.getenv("REGION")
-        translator_endpoint = "https://api.cognitive.microsofttranslator.com/"
-
-        if not azure_cogs_key or not azure_cogs_region:
-            raise ValueError("Missing API key or region in environment variables")
-
-        return cls(azure_cogs_key=azure_cogs_key, azure_cogs_region=azure_cogs_region, translator_endpoint=translator_endpoint)
+        # Initialize the Translator Client outside of Pydantic attributes
+        self.translate_client = TextTranslationClient(
+            endpoint=translate_endpoint,
+            credential=AzureKeyCredential(translate_key)
+        )
 
     def _translate_text(self, text: str, to_language: str) -> str:
-        """Translate text using the Azure Translator API."""
+        """
+        Perform text translation using the Azure Translator API.
+
+        Args:
+            text (str): The text to be translated.
+            to_language (str): The target language to translate to.
+
+        Returns:
+            str: The translation result.
+        """
+        # Check for empty input and raise a ValueError
         if not text:
-            raise ValueError("Text for translation is empty.")
+            raise ValueError("Input text for translation is empty.")
 
-        path = '/translate?api-version=3.0'
-        constructed_url = self.translator_endpoint + path
-        headers = {
-            'Ocp-Apim-Subscription-Key': self.azure_cogs_key,
-            'Ocp-Apim-Subscription-Region': self.azure_cogs_region,
-            'Content-type': 'application/json',
-        }
-        body = [{'text': text}]
-        params = {'to': to_language}
+        # The request body should contain a list of dictionaries, where each dictionary contains the text to be translated
+        body = [{"Text": text}]  # Use "Text" as the key in the body (based on Translator API)
 
-        response = requests.post(constructed_url, headers=headers, json=body, params=params)
-        response_json = response.json()
+        try:
+            # Correct call to the SDK, ensuring that the body and to_language are passed properly
+            response = self.translate_client.translate(
+                body=body,  # The body should be passed here
+                to_language=[to_language]  # The target language must be passed as a list
+            )
 
-        if response.status_code == 200:
-            translated_text = response_json[0]['translations'][0]['text']
-            return translated_text
-        else:
-            logger.error(f"Translation failed with status code {response.status_code}: {response_json}")
-            raise RuntimeError(f"Error during translation: {response_json}")
+            if response:
+                # Extract and return the translation result
+                return response[0].translations[0].text
+            else:
+                raise ValueError("Translation failed with an empty response.")
+        except Exception as e:
+            logger.error(f"Translation failed: {str(e)}")
+            raise RuntimeError(f"Error during translation: {e}")
 
     def _run(self, query: str, run_manager: Optional[CallbackManagerForToolRun] = None) -> str:
-        """Run the tool to perform translation."""
+        """
+        Run the tool to perform translation.
+
+        Args:
+            query (str): The text to be translated.
+            run_manager (Optional[CallbackManagerForToolRun], optional): A callback manager for tracking the tool run.
+
+        Returns:
+            str: The translated text.
+        """
         try:
             to_language = "fr"  # Default to French translation
-            translated_text = self._translate_text(query, to_language)
-            return translated_text
+            return self._translate_text(query, to_language)
         except Exception as e:
-            logger.error(f"Error while running AzureTranslateTool: {e}")
             raise RuntimeError(f"Error while running AzureTranslateTool: {e}")
 
+    @classmethod
+    def from_env(cls):
+        """
+        Create an instance of the tool using environment variables.
+        """
+        translate_key = os.getenv("AZURE_OPENAI_TRANSLATE_API_KEY")
+        translate_endpoint = os.getenv("AZURE_OPENAI_TRANSLATE_ENDPOINT")
 
-# Example usage
+        if not translate_key:
+            raise ValueError("AZURE_TRANSLATE_API_KEY is missing in environment variables")
+        if not translate_endpoint:
+            raise ValueError("AZURE_TRANSLATE_ENDPOINT is missing in environment variables")
+
+        print(f"API Key: {translate_key[:4]}**** (masked)")
+        print(f"Endpoint: {translate_endpoint}")
+
+        return cls(translate_key=translate_key, translate_endpoint=translate_endpoint)
+
+
+# Example test usage for the AzureTranslateTool
 if __name__ == "__main__":
+    # Set up your environment variables or pass the API key and endpoint directly
     tool = AzureTranslateTool.from_env()
-    translated_text = tool._run("does this work")
-    print(f"Translated text: {translated_text}")
+
+    # Test translating the text "Does this work?" to French
+    try:
+        translated_text = tool._run("Does this work?")
+        print(f"Translated text: {translated_text}")
+    except RuntimeError as e:
+        print(f"Error occurred: {e}")
